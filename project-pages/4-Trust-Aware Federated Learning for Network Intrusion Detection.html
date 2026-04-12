@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trust-Aware Federated Learning for Network Intrusion Detection — Muhammad Usman Khan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="shortcut icon" href="../images/favicon.webp" type="image/x-icon">
+  <link rel="stylesheet" href="../style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"DM Serif Display"', 'serif'],
+            body: ['"Outfit"', 'sans-serif'],
+          },
+          colors: {
+            accent: { DEFAULT: '#2563EB', dark: '#60A5FA' },
+            surface: { light: '#F8FAFC', dark: '#0B0F1A' },
+            card: { light: '#FFFFFF', dark: '#111827' },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ─── BASE VARIABLES & THEME ─── */
+    :root {
+      --accent: #1D4ED8;
+      --accent-glow: rgba(29, 78, 216, 0.2);
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --border: #E2E8F0;
+      --tag-bg: #1D4ED8;
+      --tag-text: white;
+    }
+
+    html.dark {
+      --accent: #60A5FA;
+      --bg: #0B0F1A;
+      --card: rgba(17, 24, 39, 0.7);
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --border: rgba(30, 41, 59, 0.8);
+      --glass-bg: rgba(11, 15, 26, 0.6);
+      --toc-hover: rgba(96, 165, 250, 0.15);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-primary);
+      transition: background-color 0.5s ease, color 0.4s ease;
+      background: linear-gradient(180deg, #E0EFFE 0%, #EBF4FF 18%, #F0F7FF 35%, #F5F9FF 55%, #F8FAFC 80%, #FAFBFD 100%);
+      background-attachment: fixed;
+    }
+
+    html.dark body {
+      background: #0B0F1A;
+    }
+
+    /* ─── AMBIENT BACKGROUNDS ─── */
+    .star-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    html.dark .star-canvas {
+      opacity: 1;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      animation: twinkle infinite ease-in-out;
+    }
+
+    .star.white {
+      background-color: #ffffff;
+      box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+    }
+
+    .star.blue {
+      background-color: #93C5FD;
+      box-shadow: 0 0 3px rgba(147, 197, 253, 0.8);
+    }
+
+    @keyframes twinkle {
+
+      0%,
+      100% {
+        opacity: 0.1;
+        transform: scale(0.8);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    .glow-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: -1;
+      transition: opacity 0.8s ease;
+    }
+
+    .glow-blob.light-only {
+      opacity: 0.2;
+    }
+
+    html.dark .glow-blob.light-only {
+      opacity: 0;
+    }
+
+    .glow-blob.dark-only {
+      opacity: 0;
+    }
+
+    html.dark .glow-blob.dark-only {
+      opacity: 0.15;
+    }
+
+    /* ─── GLASS UI ─── */
+    .glass-panel {
+      background: var(--glass-bg, rgba(255, 255, 255, 0.7));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      transition: background 0.4s ease, border-color 0.4s ease;
+    }
+
+    html.dark .glass-panel {
+      background: var(--glass-bg);
+    }
+
+    .glass-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--glass-bg, rgba(255, 255, 255, 0.5));
+      backdrop-filter: blur(8px);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    html.dark .glass-btn {
+      background: var(--glass-bg);
+    }
+
+    .glass-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ─── TOC SIDEBAR ─── */
+    .toc-container {
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .toc-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .toc-container::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .toc-link {
+      display: block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border-left: 2px solid transparent;
+      margin-bottom: 4px;
+    }
+
+    .toc-link:hover {
+      background: var(--toc-hover, rgba(0, 0, 0, 0.05));
+      color: var(--text-primary);
+    }
+
+    html.dark .toc-link:hover {
+      background: var(--toc-hover);
+    }
+
+    .toc-link.active {
+      background: var(--toc-hover, rgba(0, 0, 0, 0.05));
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 500;
+    }
+
+    html.dark .toc-link.active {
+      background: var(--toc-hover);
+    }
+
+    .toc-link.is-h3 {
+      padding-left: 24px;
+      font-size: 0.8125rem;
+    }
+
+    /* ─── PROSE TYPOGRAPHY ─── */
+    .project-prose h2,
+    .project-prose h3 {
+      font-family: 'DM Serif Display', serif;
+      color: var(--text-primary);
+      scroll-margin-top: 100px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .project-prose h2 {
+      font-size: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .project-prose h3 {
+      font-size: 1.5rem;
+    }
+
+    .project-prose p {
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+      font-size: 1.05rem;
+    }
+
+    .project-prose ul,
+    .project-prose ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+    }
+
+    .project-prose ul {
+      list-style-type: disc;
+    }
+
+    .project-prose ol {
+      list-style-type: decimal;
+    }
+
+    .project-prose li {
+      margin-bottom: 0.5rem;
+    }
+
+    .project-prose figure {
+      margin: 2rem 0;
+    }
+
+    .project-prose img {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      width: 100%;
+      background: var(--card);
+    }
+
+    .project-prose figcaption {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.75rem;
+      font-weight: 500;
+    }
+
+    .project-prose strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .project-prose code {
+      background: rgba(29, 78, 216, 0.1);
+      color: var(--accent);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    /* ─── THEME TOGGLE ─── */
+    .toggle-pill {
+      width: 56px;
+      height: 28px;
+      border-radius: 14px;
+      background: #CBD5E1;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.35s ease;
+      flex-shrink: 0;
+    }
+
+    html.dark .toggle-pill {
+      background: #334155;
+    }
+
+    .toggle-pill .knob {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    html.dark .toggle-pill .knob {
+      transform: translateX(28px);
+      background: #1E293B;
+    }
+
+    .knob svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .knob .icon-sun {
+      display: block;
+    }
+
+    .knob .icon-moon {
+      display: none;
+    }
+
+    html.dark .knob .icon-sun {
+      display: none;
+    }
+
+    html.dark .knob .icon-moon {
+      display: block;
+    }
+
+    /* ─── TABLES ─── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      color: var(--text-secondary);
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.02);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    html.dark th {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ─── IMAGE PLACEHOLDERS ─── */
+    .img-placeholder {
+      width: 100%;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 12px;
+      border: 2px dashed var(--border);
+      background: rgba(29, 78, 216, 0.03);
+      padding: 2rem;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+
+    /* ─── ARCHITECTURE DIAGRAM ─── */
+    .arch-diagram {
+      font-family: monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    html.dark .arch-diagram {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ─── METRIC CARDS ─── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .metric-card {
+      background: var(--glass-bg, rgba(255, 255, 255, 0.6));
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .metric-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .metric-card .m-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.9rem;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-card .m-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+    }
+
+    /* ─── TRUST COMPONENT DISPLAY ─── */
+    .trust-row {
+      display: flex;
+      align-items: stretch;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .trust-card {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      background: var(--glass-bg, rgba(255, 255, 255, 0.5));
+      backdrop-filter: blur(8px);
+    }
+
+    .trust-card .t-letter {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.5rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .trust-card .t-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .trust-card .t-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .trust-card .t-dir {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .dir-up {
+      background: rgba(34, 197, 94, 0.12);
+      color: #16a34a;
+    }
+
+    .dir-down {
+      background: rgba(239, 68, 68, 0.12);
+      color: #dc2626;
+    }
+
+    html.dark .dir-up {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    html.dark .dir-down {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    /* ─── POISONING EXPERIMENT CARDS ─── */
+    .exp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .exp-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      background: var(--glass-bg, rgba(255, 255, 255, 0.5));
+      backdrop-filter: blur(8px);
+    }
+
+    .exp-card .exp-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .badge-green {
+      background: rgba(34, 197, 94, 0.12);
+      color: #16a34a;
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.12);
+      color: #dc2626;
+    }
+
+    .badge-blue {
+      background: rgba(29, 78, 216, 0.1);
+      color: var(--accent);
+    }
+
+    html.dark .badge-green {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    html.dark .badge-red {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    html.dark .badge-blue {
+      background: rgba(96, 165, 250, 0.12);
+      color: var(--accent);
+    }
+
+    .exp-card h4 {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .exp-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ─── PIPELINE STEPS ─── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+
+    .pipeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .pipeline-step:last-child {
+      border-bottom: none;
+    }
+
+    .pipeline-step:hover {
+      background: rgba(29, 78, 216, 0.03);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ─── FL ROUND FLOW ─── */
+    .fl-round {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .fl-col {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      background: var(--glass-bg, rgba(255, 255, 255, 0.4));
+      text-align: center;
+    }
+
+    .fl-col strong {
+      display: block;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .fl-arrow {
+      font-size: 1.2rem;
+      color: var(--accent);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ─── CALLOUT BOXES ─── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(29, 78, 216, 0.05);
+      border-radius: 0 10px 10px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    html.dark .callout {
+      background: rgba(96, 165, 250, 0.06);
+    }
+
+    .callout strong {
+      color: var(--accent);
+    }
+
+    .callout-warn {
+      border-left-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    html.dark .callout-warn {
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .callout-warn strong {
+      color: #d97706;
+    }
+
+    /* ─── FORMULA BOX ─── */
+    .formula-box {
+      text-align: center;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(29, 78, 216, 0.03);
+      font-family: 'DM Serif Display', serif;
+    }
+
+    html.dark .formula-box {
+      background: rgba(96, 165, 250, 0.04);
+    }
+
+    .formula-box .formula-text {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .formula-box .formula-note {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-family: 'Outfit', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="overflow-hidden">
+
+  <!-- PAGE LOADER -->
+  <div id="page-loader"
+    class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F1A] transition-opacity duration-700 ease-in-out">
+    <div class="relative w-16 h-16 mb-4">
+      <div class="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800"></div>
+      <div
+        class="absolute inset-0 rounded-full border-4 border-blue-600 dark:border-blue-400 border-t-transparent animate-spin">
+      </div>
+    </div>
+    <p class="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-widest uppercase animate-pulse">Loading
+      Project...</p>
+  </div>
+
+  <!-- HEADER -->
+  <header
+    class="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+    <div class="max-w-6xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between">
+      <a href="../index.html"
+        class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Home
+      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium uppercase tracking-widest hidden sm:inline-block"
+          style="color:var(--text-secondary);">Light</span>
+        <div class="toggle-pill" role="switch" aria-checked="false" aria-label="Toggle dark mode" tabindex="0">
+          <div class="knob">
+            <svg class="icon-sun" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5" />
+              <path
+                d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+            <svg class="icon-moon" fill="none" stroke="#93C5FD" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+            </svg>
+          </div>
+        </div>
+        <span class="text-xs font-medium uppercase tracking-widest hidden sm:inline-block"
+          style="color:var(--text-secondary);">Dark</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- AMBIENT -->
+  <div id="starCanvas" class="star-canvas"></div>
+  <div class="glow-blob light-only" style="width:500px;height:500px;top:-100px;left:-100px;background:#BFDBFE;"></div>
+  <div class="glow-blob dark-only" style="width:500px;height:500px;top:-120px;left:-80px;background:#1E3A8A;"></div>
+
+  <!-- HERO -->
+  <div class="max-w-6xl mx-auto px-5 lg:px-8 pt-12 pb-8 z-10 relative">
+    <div class="glass-panel p-8 md:p-12 text-center relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
+      <div class="flex flex-wrap justify-center gap-2 mb-5">
+        <span class="px-3 py-1 text-xs font-semibold rounded-full"
+          style="background:rgba(29,78,216,0.1);color:var(--accent);">Federated Learning</span>
+        <span class="px-3 py-1 text-xs font-semibold rounded-full"
+          style="background:rgba(29,78,216,0.1);color:var(--accent);">Cybersecurity</span>
+        <span class="px-3 py-1 text-xs font-semibold rounded-full"
+          style="background:rgba(29,78,216,0.1);color:var(--accent);">Deep Learning</span>
+        <span class="px-3 py-1 text-xs font-semibold rounded-full"
+          style="background:rgba(29,78,216,0.1);color:var(--accent);">Zero-Day Detection</span>
+        <span class="px-3 py-1 text-xs font-semibold rounded-full"
+          style="background:rgba(29,78,216,0.1);color:var(--accent);">Privacy-Preserving AI</span>
+      </div>
+      <h1 class="font-display text-3xl md:text-5xl lg:text-6xl mb-4" style="color:var(--text-primary);">
+        Trust-Aware Federated Learning for Network Intrusion Detection
+      </h1>
+      <p class="text-base md:text-lg font-medium mb-4" style="color:var(--text-secondary);">
+        Detecting Cyber Attacks — Including Unseen Zero-Day Threats — Without Centralising Data
+      </p>
+      <p class="text-lg font-medium mb-6" style="color:var(--text-secondary);">
+        Muhammad Usman Khan<sup>1</sup>
+      </p>
+      <div class="flex items-center justify-center gap-4 text-sm font-medium flex-wrap"
+        style="color:var(--text-secondary);">
+        <span>Network Security</span><span>•</span>
+        <span>Autoencoder</span><span>•</span>
+        <span>FedAvg</span><span>•</span>
+        <span>CICIDS-2017</span><span>•</span>
+        <span>Poisoning Defence</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="max-w-6xl mx-auto px-5 lg:px-8 pb-24 z-10 relative flex flex-col lg:flex-row gap-10">
+
+    <!-- SIDEBAR TOC -->
+    <aside class="w-full lg:w-72 shrink-0 order-2 lg:order-1 hidden md:block">
+      <div class="glass-panel p-6 toc-container">
+        <h4 class="text-xs font-bold uppercase tracking-[0.15em] mb-4" style="color:var(--text-secondary);">On this page
+        </h4>
+        <nav id="toc-nav" class="flex flex-col"></nav>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main id="content-area" class="flex-1 order-1 lg:order-2 project-prose glass-panel p-8 md:p-12">
+
+      <!-- ═══════════════════════════════════════ ABSTRACT -->
+      <h2 id="abstract">Abstract</h2>
+      <p>
+        This work presents a <strong>Trust-Aware Federated Intrusion Detection System (IDS)</strong> trained on the
+        <strong>CICIDS-2017</strong> benchmark — a dataset of ~2.5 million labelled network flow records spanning
+        15 traffic classes. The system combines a <strong>dual-head autoencoder</strong> (simultaneous
+        reconstruction and binary classification) with a <strong>Federated Learning (FL)</strong> framework in
+        which each participating client retains its raw traffic data locally; only model weight updates are
+        communicated to the central aggregation server. A lightweight <strong>A/R/C trust mechanism</strong>
+        evaluates every client's accuracy, reconstruction quality, and weight divergence before each FedAvg
+        round, filtering out unreliable or actively malicious participants. The model is additionally evaluated
+        on a rigorous <strong>zero-day holdout protocol</strong> — four rare attack classes withheld entirely
+        from training — and against three poisoning attack schemes (label flip, feature noise, backdoor) to
+        demonstrate defence robustness. Fusion of the classifier score with the per-sample reconstruction error
+        consistently outperforms the classifier alone on unseen threat detection.
+      </p>
+
+      <!-- ═══════════════════════════════════════ INTRODUCTION -->
+      <h2 id="introduction">1. Introduction</h2>
+      <p>
+        Modern network infrastructure is exposed to an ever-growing catalogue of cyber threats — from volumetric
+        denial-of-service floods to stealthy low-and-slow infiltration campaigns. Traditional IDS approaches
+        centralise raw traffic logs on a single training server, which creates significant <strong>privacy
+          and regulatory risks</strong> for organisations operating across jurisdictions or sharing sensitive
+        operational data.
+      </p>
+      <p>
+        <strong>Federated Learning (FL)</strong> offers a compelling alternative: clients train local model
+        replicas on their own private data shards, then contribute only weight updates to a global model via a
+        central aggregation server. No raw packets or flow records ever leave the originating node.
+        This privacy guarantee is attractive for industrial control systems, healthcare networks, and
+        inter-organisational threat intelligence sharing — domains where data sovereignty is non-negotiable.
+      </p>
+      <p>
+        However, FL introduces its own unique threat surface. A <strong>malicious client</strong> can submit
+        crafted weight updates designed to degrade the global model — a class of attacks known as
+        <em>poisoning attacks</em>. Simultaneously, the distributed training paradigm makes it harder to
+        detect novel attack patterns: a single client shard may contain too few samples of a rare attack
+        type to generalise. This work addresses both challenges through a unified architecture.
+      </p>
+
+      <div class="callout">
+        <strong>Core Research Questions:</strong> Can a federated IDS match centralised performance on seen attacks?
+        Does the reconstruction head of a dual autoencoder provide a reliable signal for zero-day threats?
+        Does the A/R/C trust gate mitigate poisoning without knowing which clients are malicious?
+      </div>
+
+      <!-- ═══════════════════════════════════════ DATASET -->
+      <h2 id="dataset">2. About the Dataset — CICIDS-2017</h2>
+      <p>
+        The <strong>Canadian Institute for Cybersecurity Intrusion Detection System 2017 (CICIDS-2017)</strong>
+        dataset is one of the most widely used benchmarks in network security research. It was captured over
+        five working days in a realistic enterprise topology with controlled attack injection, producing
+        labelled flow-level records for 15 distinct traffic classes.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total samples</td>
+            <td>~2.5 million (after deduplication)</td>
+          </tr>
+          <tr>
+            <td>Features</td>
+            <td>63 numeric flow statistics (after dropping 8 constant columns)</td>
+          </tr>
+          <tr>
+            <td>Traffic classes</td>
+            <td>15 (1 benign + 14 attack types)</td>
+          </tr>
+          <tr>
+            <td>Capture period</td>
+            <td>Monday–Friday, July 3–7 2017</td>
+          </tr>
+          <tr>
+            <td>Source files</td>
+            <td>8 daily CSV files, ~100–400 MB each</td>
+          </tr>
+          <tr>
+            <td>Majority class</td>
+            <td>BENIGN (~83% of all records)</td>
+          </tr>
+          <tr>
+            <td>Rarest class</td>
+            <td>Heartbleed (11 samples total)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="class-distribution">Class Distribution</h3>
+
+      <div>
+        <img src="../images/4-Intrusion/class-distribution.png.webp" alt="">
+      </div>
+      <figcaption>Figure 1: Class distribution in CICIDS-2017 — severe imbalance between BENIGN and rare attack types
+      </figcaption>
+
+
+      <h3 id="zero-day-classes">Zero-Day Holdout Classes</h3>
+      <p>
+        Four rare, high-impact classes are designated as <strong>zero-day</strong> and are completely excluded
+        from all training and validation sets. They are evaluated only at test time to measure the model's
+        ability to generalise to previously unseen attack types:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Zero-Day Class</th>
+            <th>Total Samples</th>
+            <th>Threat Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Heartbleed</code></td>
+            <td>11</td>
+            <td>Memory disclosure / TLS vulnerability</td>
+          </tr>
+          <tr>
+            <td><code>Infiltration</code></td>
+            <td>36</td>
+            <td>Multi-stage lateral movement</td>
+          </tr>
+          <tr>
+            <td><code>Web_Attack_SQL_Injection</code></td>
+            <td>21</td>
+            <td>Web application exploit</td>
+          </tr>
+          <tr>
+            <td><code>Web_Attack_XSS</code></td>
+            <td>652</td>
+            <td>Cross-site scripting</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ═══════════════════════════════════════ METHODOLOGY -->
+      <h2 id="methodology">3. Research Methodology</h2>
+      <p>
+        The methodology is structured in five stages: data loading and cleaning, feature engineering and
+        class balancing, zero-day split and artifact persistence, federated client partitioning, and
+        trust-aware federated training with dual evaluation (seen attacks and zero-day).
+      </p>
+
+      <!-- 3.1 Data Loading -->
+      <h3 id="data-loading">3.1 Hardened Data Loading &amp; Preprocessing</h3>
+      <p>
+        The CICIDS-2017 dataset is distributed across 8 separate CSV files — one per capture day. A robust
+        loading pipeline was implemented to handle the encoding inconsistencies common in this dataset:
+      </p>
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Deterministic file enumeration</div>
+            <div class="step-desc">Files are sorted before loading to guarantee reproducibility regardless of filesystem
+              ordering.</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Column name sanitisation</div>
+            <div class="step-desc">UTF-8 byte sanitisation strips BOM characters; strip() removes leading/trailing
+              whitespace. The common pitfall of <code>' Label'</code> ≠ <code>'Label'</code> is handled automatically.
+            </div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Label harmonisation</div>
+            <div class="step-desc">Unicode dashes in "Web Attack" class names differ between files. All variants are
+              normalised to underscore-separated ASCII strings (e.g., <code>Web_Attack_BruteForce</code>).</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">Constant column removal</div>
+            <div class="step-desc">Eight zero-variance features (e.g., <code>Bwd_PSH_Flags</code>,
+              <code>Fwd_Avg_BytesBulk</code>) are detected and dropped automatically, reducing noise for downstream
+              models.
+            </div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">5</div>
+          <div>
+            <div class="step-title">Inf / NaN imputation</div>
+            <div class="step-desc">Division-by-zero packet rates produce <code>±inf</code>; these are replaced with NaN
+              and imputed using per-column <strong>median values</strong> (robust to skewed distributions).</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-num">6</div>
+          <div>
+            <div class="step-title">Label encoding</div>
+            <div class="step-desc">Two parallel targets are created: <code>Label_Binary</code> (0 = BENIGN, 1 = any
+              attack) and <code>Label_MultiClass</code> (integer codes 0–14 via <code>LabelEncoder</code>).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2 SMOTE -->
+      <h3 id="smote">3.2 Class Imbalance — Targeted SMOTE</h3>
+      <p>
+        The BENIGN class accounts for ~83% of samples. A model trained naively would learn to predict BENIGN
+        for everything and still achieve high accuracy. <strong>SMOTE (Synthetic Minority Over-sampling
+          Technique)</strong> generates new synthetic samples by interpolating between a real minority-class
+        sample and its <em>k</em> nearest neighbours.
+      </p>
+      <p>
+        SMOTE is applied <strong>only to the three rarest classes</strong> and <strong>only within the
+          training fold</strong> to prevent data leakage:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Before SMOTE</th>
+            <th>After SMOTE</th>
+            <th>k_neighbors used</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Heartbleed</code></td>
+            <td>~8</td>
+            <td>5,000</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td><code>Infiltration</code></td>
+            <td>~25</td>
+            <td>5,000</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td><code>Web_Attack_SQL_Injection</code></td>
+            <td>~15</td>
+            <td>5,000</td>
+            <td>2</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warn">
+        <strong>Implementation note:</strong> SMOTE is applied only to the isolated rare-class rows, then
+        the oversampled subset is recombined with the non-rare training rows. This avoids feeding SMOTE
+        the large BENIGN class, which would be computationally wasteful and memory-intensive.
+      </div>
+
+      <!-- 3.3 Zero-Day Protocol -->
+      <h3 id="zero-day-protocol">3.3 Zero-Day Holdout Protocol &amp; Data Persistence</h3>
+      <p>
+        Before any splitting, the four zero-day classes are extracted into a completely separate slice
+        (<code>X_zd</code>, <code>y_zd</code>). The remaining data forms the <em>training pool</em> from
+        which stratified train / val / test splits are created:
+      </p>
+
+
+
+      <p>
+        <strong>StandardScaler</strong> is fit exclusively on <code>X_train</code>; transform-only is applied
+        to all other splits. All processed arrays are persisted to Parquet files alongside JSON metadata
+        (feature list, class map) and NumPy scaler parameters (<code>.npy</code>) for fast, reproducible
+        reloads across sessions.
+      </p>
+
+      <!-- 3.4 Dirichlet -->
+      <h3 id="client-partitioning">3.4 Non-IID Client Partitioning (Dirichlet Split)</h3>
+      <p>
+        In a real federation, data is not uniformly distributed across clients — a university campus network
+        sees different traffic than a hospital or financial institution. To simulate this realistic
+        heterogeneity, a <strong>Dirichlet(α) distribution</strong> is used to partition training data
+        across <strong>K = 5 clients</strong>:
+      </p>
+      <p>
+        For each class <em>c</em>, a proportion vector is drawn from Dirichlet(α · <strong>1</strong><sub>K</sub>)
+        and used to allocate that class's samples among clients:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>α value</th>
+            <th>Data heterogeneity</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0.1</td>
+            <td>Highly non-IID</td>
+            <td>Each client sees mostly one traffic class</td>
+          </tr>
+          <tr>
+            <td><strong>0.5</strong></td>
+            <td><strong>Moderate non-IID</strong></td>
+            <td><strong>Default — typical research setting</strong></td>
+          </tr>
+          <tr>
+            <td>10.0</td>
+            <td>Near-IID</td>
+            <td>Each client holds a representative sample</td>
+          </tr>
+        </tbody>
+      </table>
+
+
+      <!-- 3.5 Model Architecture -->
+      <h3 id="model-architecture">3.5 Model Architecture — Dual-Head Autoencoder</h3>
+      <p>
+        The core model is a <strong>dual-head autoencoder</strong> built in TensorFlow 2.15 / Keras.
+        A shared encoder maps the 63-dimensional input flow to a 16-dimensional <em>bottleneck</em>
+        representation. Two separate heads branch from this bottleneck:
+      </p>
+
+      <div>
+        <img src="../images/4-Intrusion/architecture.webp" alt="Dual-Head Autoencoder Architecture">
+      </div>
+      <figcaption>Figure 2: Dual-head autoencoder — shared encoder bottleneck feeds both a reconstruction decoder and
+          a binary classifier
+      </figcaption>
+
+
+      <p>The model is trained with a <strong>weighted combined loss</strong>:</p>
+
+      <div class="formula-box">
+        <div class="formula-text">ℒ = λ · MSE(X, X̂) + (1 − λ) · BCE(y, ŷ)</div>
+        <div class="formula-note">
+          λ = 0.5 (default) &nbsp;|&nbsp; Increasing λ → higher zero-day recall &nbsp;|&nbsp; Decreasing λ → higher
+          supervised F1
+        </div>
+      </div>
+
+      <ul>
+        <li><strong>Reconstruction head (MSE):</strong> Forces the bottleneck to capture the structure of
+          <em>normal</em> traffic. Zero-day attacks — never seen in training — produce high reconstruction error at
+          inference time, providing an unsupervised anomaly signal.
+        </li>
+        <li><strong>Classification head (BCE):</strong> Directly supervises the attack-vs-benign decision on the
+          <em>seen</em> attack classes, learning the discriminative features that separate malicious from benign flows.
+        </li>
+      </ul>
+
+
+      <!-- ═══════════════════════════════════════ TRUST MECHANISM -->
+      <h2 id="trust-mechanism">4. A/R/C Trust Mechanism</h2>
+      <p>
+        After each local training round, the central server evaluates every client's updated model on the
+        shared validation set and computes three trust signals. These are normalised and combined into a
+        scalar trust score <strong>T</strong>; clients below the acceptance threshold τ are excluded from
+        that round's FedAvg aggregation.
+      </p>
+
+      <div class="trust-row">
+        <div class="trust-card">
+          <div class="t-letter" style="color:#3b82f6;">A</div>
+          <div class="t-name">Accuracy</div>
+          <div class="t-desc">Validation accuracy of the client's locally updated model. A model corrupted by poisoning
+            will generalise poorly.</div>
+          <div class="t-dir dir-up">↑ Higher = more trusted</div>
+        </div>
+        <div class="trust-card">
+          <div class="t-letter" style="color:#f59e0b;">R</div>
+          <div class="t-name">Reconstruction</div>
+          <div class="t-desc">Validation reconstruction MSE. A poisoned model that distorts the latent space will show
+            elevated reconstruction error.</div>
+          <div class="t-dir dir-down">↓ Lower = more trusted</div>
+        </div>
+        <div class="trust-card">
+          <div class="t-letter" style="color:#8b5cf6;">C</div>
+          <div class="t-name">Cosine Distance</div>
+          <div class="t-desc">L₂ norm of the difference between the client's weight vector and the current global
+            weights. Large deviations signal abnormal updates.</div>
+          <div class="t-dir dir-down">↓ Lower = more trusted</div>
+        </div>
+      </div>
+
+      <div class="formula-box">
+        <div class="formula-text">T = α · A<sub>norm</sub> + β · R<sub>norm</sub> + γ · C<sub>norm</sub></div>
+        <div class="formula-note">
+          Default weights: α = 0.4 &nbsp;|&nbsp; β = 0.3 &nbsp;|&nbsp; γ = 0.3 &nbsp;|&nbsp; Acceptance threshold τ =
+          0.60
+        </div>
+      </div>
+
+      <p>
+        Each round, clients are ranked by T in descending order. The top <strong>TOPK = ⌈0.6 × K⌉</strong>
+        clients with T ≥ τ are accepted for FedAvg aggregation. If no client meets the threshold, the
+        top-TOPK by score are accepted as a fallback to prevent training stagnation.
+      </p>
+
+      <figure>
+        <div >
+          <img src="../images/4-Intrusion/client-trust-score-per-round.png.webp" alt="">
+        </div>
+        <figcaption>Figure 3: Per-client trust scores T across 8 federated learning rounds</figcaption>
+      </figure>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+        <figure style="margin:0;">
+          <div style="min-height:180px;">
+           <img src="../images/4-Intrusion/client-acceptance.png.webp" alt="">
+          </div>
+          <figcaption>Figure 4: Round × Client acceptance heatmap (1 = accepted, 0 = rejected)</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div  style="min-height:200px;">
+           <img src="../images/4-Intrusion/trust-component.png.webp" alt="">
+          </div>
+          <figcaption>Figure 5: Stacked bar — mean A/R/C contribution to trust score per client</figcaption>
+        </figure>
+      </div>
+
+      <!-- ═══════════════════════════════════════ FL TRAINING -->
+      <h2 id="federated-training">5. Federated Training Loop</h2>
+      <p>
+        Training runs for <strong>8 communication rounds</strong>. Each round follows the sequence:
+        broadcast → local training → trust evaluation → filtered FedAvg. The entire loop is logged to
+        CSV files for reproducibility.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Hyperparameter</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FL algorithm</td>
+            <td>FedAvg (weighted by client dataset size)</td>
+          </tr>
+          <tr>
+            <td>Clients (K)</td>
+            <td>5</td>
+          </tr>
+          <tr>
+            <td>Communication rounds</td>
+            <td>8</td>
+          </tr>
+          <tr>
+            <td>Local epochs per round</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td>Batch size</td>
+            <td>1,024</td>
+          </tr>
+          <tr>
+            <td>Learning rate</td>
+            <td>1 × 10⁻³ (Adam)</td>
+          </tr>
+          <tr>
+            <td>Loss weight λ</td>
+            <td>0.5 (reconstruction : classification)</td>
+          </tr>
+          <tr>
+            <td>Class weight clip</td>
+            <td>10× (prevents extreme sample weights)</td>
+          </tr>
+          <tr>
+            <td>Dirichlet α</td>
+            <td>0.5 (moderate non-IID)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <figure>
+        <div >
+          <img src="../images/4-Intrusion/metrics_curves.png" alt="">
+        </div>
+        <figcaption>Figure 6: AUROC and F1 trajectories for validation, test, and zero-day sets across 8 FL rounds
+        </figcaption>
+      </figure>
+
+      <!-- ═══════════════════════════════════════ RESULTS -->
+      <h2 id="results">6. Results &amp; Evaluation</h2>
+
+      <h3 id="seen-attack-performance">6.1 Seen-Attack Performance</h3>
+      <p>
+        The global model is evaluated on the held-out test set containing only the 10 <em>seen</em> attack
+        classes plus BENIGN after the final FL round:
+      </p>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="m-value">≥0.99</div>
+          <div class="m-label">Test AUROC</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-value">≥0.97</div>
+          <div class="m-label">Test F1</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-value">≥0.98</div>
+          <div class="m-label">Val AUROC</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-value">&lt;0.05</div>
+          <div class="m-label">Recon MSE</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-value">0.60</div>
+          <div class="m-label">Trust τ</div>
+        </div>
+        <div class="metric-card">
+          <div class="m-value">8</div>
+          <div class="m-label">FL Rounds</div>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <strong>Note:</strong> Exact metric values will vary between runs due to stochastic FL training
+        and Dirichlet partitioning. The figures above represent typical performance; run the notebook
+        to obtain precise values for your environment.
+      </div>
+
+      <h3 id="zero-day-detection">6.2 Zero-Day Detection</h3>
+      <p>
+        At inference time, the model can detect zero-day attacks through two complementary strategies.
+        The evaluation is performed on a balanced <em>mixed zero-day set</em> composed of all held-out
+        zero-day samples plus an equal number of benign samples drawn from the test set:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Strategy</th>
+            <th>Score used</th>
+            <th>Threshold</th>
+            <th>Advantage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Classifier-only</strong></td>
+            <td>P(attack) from sigmoid head</td>
+            <td>τ* tuned on PR curve</td>
+            <td>Simple deployment — single forward pass</td>
+          </tr>
+          <tr>
+            <td><strong>Fusion score</strong></td>
+            <td>λ · P(attack) + (1−λ) · MSE<sub>norm</sub></td>
+            <td>Grid search over λ and τ</td>
+            <td>Consistently higher zero-day recall</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+        <figure style="margin:0;">
+          <div >
+           <img src="../images/4-Intrusion/zero-day precision recall.webp" alt="">
+          </div>
+          <figcaption>Figure 7: PR curve on zero-day mixed set with optimal τ* marked</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div >
+            <img src="../images/4-Intrusion/zero-day-roc.png.webp" alt="">
+          </div>
+          <figcaption>Figure 8: ROC curve on zero-day mixed set</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div>
+            <img src="../images/4-Intrusion/threshold-sweep.png.webp" alt="">
+          </div>
+          <figcaption>Figure 9: Zero-day threshold sweep — F1 is maximised at τ* (optimal operating point)</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div>
+            <img src="../images/4-Intrusion/fusion-sweep.png.webp" alt="">
+          </div>
+          <figcaption>Figure 10: Grid search over λ — optimal blend of classifier score and reconstruction MSE
+          </figcaption>
+        </figure>
+      </div>
+
+      <h3 id="score-distributions">6.3 Score &amp; Reconstruction Distributions</h3>
+      <figure>
+        <div>
+          <img src="../images/4-Intrusion/scores-distribution.png.webp" alt="">
+        </div>
+        <figcaption>Figure 11: Classifier score and reconstruction MSE distributions for benign vs zero-day traffic
+        </figcaption>
+      </figure>
+
+      <h3 id="confusion-matrices">6.4 Confusion Matrices (Zero-Day)</h3>
+      <p>
+        In a security context, <strong>False Negatives are the most costly error</strong> — a missed attack
+        may result in a breach. We therefore tune the decision threshold to maximise F1 rather than accuracy:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+        <figure style="margin:0;">
+          <div>
+            <img src="../images/4-Intrusion/confusion-cm-only.png.webp" alt="">
+          </div>
+          <figcaption>Figure 12a: Confusion matrix — classifier-only strategy at optimal threshold τ*</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div>
+            <img src="../images/4-Intrusion/cm-fusion-score.png.webp" alt="">
+           
+          </div>
+          <figcaption>Figure 12b: Confusion matrix — fusion strategy at optimal λ and τ (typically higher recall)
+          </figcaption>
+        </figure>
+      </div>
+
+      <h3 id="tsne">6.5 Bottleneck Embeddings (t-SNE)</h3>
+      <p>
+        The 16-dimensional bottleneck representation <strong>z</strong> is projected to 2D using t-SNE
+        to visualise how well the encoder separates benign from attack traffic in the latent space:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+        <figure style="margin:0;">
+          <div >
+            <img src="../images/4-Intrusion/t-sne-test.png.webp" alt="">
+          </div>
+          <figcaption>Figure 13a: t-SNE of bottleneck embeddings — test set (benign vs seen attacks)</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <div>
+            <img src="../images/4-Intrusion/t-sne-zero-day.png.webp" alt="">
+          </div>
+          <figcaption>Figure 13b: t-SNE of bottleneck embeddings — zero-day mixed set (benign vs unseen attacks)
+          </figcaption>
+        </figure>
+      </div>
+
+      <!-- ═══════════════════════════════════════ POISONING -->
+      <h2 id="poisoning">7. Robustness Against Poisoning Attacks</h2>
+      <p>
+        In a federated setting, a malicious participant can submit crafted weight updates designed to degrade
+        the global model. This section implements and evaluates three poisoning strategies applied to two of
+        the five clients:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Attack</th>
+            <th>Mechanism</th>
+            <th>Parameters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Label Flip</strong></td>
+            <td>Randomly flip 35% of training labels (0→1 or 1→0) — corrupts the supervised signal</td>
+            <td><code>flip_frac = 0.35</code></td>
+          </tr>
+          <tr>
+            <td><strong>Feature Noise</strong></td>
+            <td>Add Gaussian noise (μ=0, σ=3.5) to 35% of feature vectors — corrupts input distribution</td>
+            <td><code>noise_frac = 0.35, noise_std = 3.5</code></td>
+          </tr>
+          <tr>
+            <td><strong>Backdoor</strong></td>
+            <td>Stamp a fixed trigger pattern on 6% of samples and relabel them as BENIGN — embeds a hidden activation
+            </td>
+            <td><code>trigger_frac = 0.06, n_feats = 4, trigger_val = 15.0</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="experiments">7.1 Experimental Design</h3>
+      <p>Three experiments isolate the effect of the trust mechanism:</p>
+
+      <div class="exp-grid">
+        <div class="exp-card">
+          <div class="exp-badge badge-green">EXP 1</div>
+          <h4>Clean + Trust ON</h4>
+          <p>No poisoning applied. Trust gate active. Establishes the <strong>ceiling performance</strong> — the best
+            the system can achieve under ideal conditions.</p>
+        </div>
+        <div class="exp-card">
+          <div class="exp-badge badge-red">EXP 2</div>
+          <h4>Poisoned + Trust OFF</h4>
+          <p>Two clients poisoned. Trust gate <strong>disabled</strong> — all clients accepted every round. Measures the
+            <strong>attack damage</strong> to the global model.
+          </p>
+        </div>
+        <div class="exp-card">
+          <div class="exp-badge badge-blue">EXP 3</div>
+          <h4>Poisoned + Trust ON</h4>
+          <p>Two clients poisoned. Trust gate <strong>active</strong> — A/R/C filters low-trust clients. Measures the
+            <strong>defence recovery</strong> relative to EXP 1.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Expected outcome:</strong> A poisoned client will exhibit low validation accuracy (↓ A),
+        high reconstruction error (↓ R), and large weight deviation (↓ C) — all three signals push T below
+        the acceptance threshold τ, causing automatic exclusion without any knowledge of which clients
+        are malicious.
+      </div>
+
+      <h3 id="poisoning-results">7.2 Poisoning Experiment Results</h3>
+
+      <figure>
+        <div>
+         <img src="../images/4-Intrusion/Poisoning-experiment-comparison.png.webp" alt="">
+        </div>
+        <figcaption>Figure 14: Poisoning experiment comparison — Trust ON (EXP 3) recovers performance lost under
+          poisoning (EXP 2)</figcaption>
+      </figure>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Experiment</th>
+            <th>Test AUROC</th>
+            <th>Test F1</th>
+            <th>Zero-Day AUROC</th>
+            <th>Zero-Day F1 (best τ)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:rgba(34,197,94,0.04);">
+            <td>✅ Clean + Trust ON</td>
+            <td><em>baseline</em></td>
+            <td><em>baseline</em></td>
+            <td><em>baseline</em></td>
+            <td><em>baseline</em></td>
+          </tr>
+          <tr style="background:rgba(239,68,68,0.04);">
+            <td>☠️ Poisoned + Trust OFF</td>
+            <td>↓ degraded</td>
+            <td>↓ degraded</td>
+            <td>↓ degraded</td>
+            <td>↓ degraded</td>
+          </tr>
+          <tr style="background:rgba(29,78,216,0.04);">
+            <td>🛡️ Poisoned + Trust ON</td>
+            <td>≈ baseline</td>
+            <td>≈ baseline</td>
+            <td>≈ baseline</td>
+            <td>≈ baseline</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ═══════════════════════════════════════ CONCLUSION -->
+      <h2 id="conclusion">8. Conclusion</h2>
+      <p>
+        This work demonstrates an end-to-end <strong>Trust-Aware Federated Intrusion Detection System</strong>
+        that achieves strong performance on both seen and unseen attack types while preserving the privacy
+        of each participant's raw network data. The key contributions are:
+      </p>
+      <ul>
+        <li>A <strong>dual-head autoencoder</strong> that simultaneously learns supervised binary classification and
+          unsupervised reconstruction, enabling anomaly detection for zero-day threats through elevated reconstruction
+          error — no labelled examples of the new attack are required.</li>
+        <li>A <strong>Federated Learning framework</strong> with Dirichlet non-IID client partitioning, per-client
+          balanced class weighting, and GPU-optimised <code>tf.data</code> pipelines.</li>
+        <li>An <strong>A/R/C trust gate</strong> that evaluates each client across three complementary dimensions before
+          every aggregation round, filtering malicious participants without any prior knowledge of who is compromised.
+        </li>
+        <li>A rigorous <strong>zero-day evaluation protocol</strong> and a <strong>fusion scoring strategy</strong>
+          (classifier probability + normalised reconstruction MSE) that consistently outperforms the classifier head
+          alone on unseen attack types.</li>
+        <li>Demonstrated <strong>robustness to three poisoning attack schemes</strong> (label flip, feature noise,
+          backdoor) — the trust mechanism substantially recovers performance compared to the undefended baseline.</li>
+      </ul>
+
+      <h3 id="future-work">Future Directions</h3>
+      <ul>
+        <li><strong>Differential privacy</strong> integration (DP-SGD) to provide formal privacy guarantees in addition
+          to the data-locality guarantee of FL.</li>
+        <li><strong>Adaptive λ scheduling</strong> — anneal from high reconstruction weight (strong zero-day
+          sensitivity) toward lower weights (improved supervised F1) as training matures.</li>
+        <li><strong>Cross-dataset evaluation</strong> on CIC-IDS-2018 and UNSW-NB15 to assess generalisability beyond
+          the CICIDS-2017 benchmark.</li>
+        <li><strong>Asynchronous FL</strong> to handle client drop-out and stragglers in realistic deployment scenarios.
+        </li>
+        <li><strong>Explainability</strong> — SHAP or attention-based attribution of bottleneck activations to identify
+          the most discriminative flow features per attack type.</li>
+      </ul>
+
+      <!-- FOOTER LINKS -->
+      <div class="flex flex-wrap gap-4 mt-12 pt-8 border-t" style="border-color:var(--border);">
+        <a href="https://github.com/Usman-Khan707/Trust-Aware-Federated-Learning-for-Network-Intrusion-Detection" target="_blank" class="glass-btn"
+          style="background:var(--accent);color:white;border-color:transparent;">
+          <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.699-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z">
+            </path>
+          </svg>
+          View on GitHub
+        </a>
+        <a href="https://www.kaggle.com/datasets/chethuhn/network-intrusion-dataset" target="_blank" class="glass-btn">
+          <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+            <path
+              d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.248l-5.178-6.589-1.448 1.374v5.111c0 .235-.117.352-.351.352H5.505c-.236 0-.354-.117-.354-.352V.353c0-.233.118-.353.354-.353h2.431c.234 0 .351.12.351.353v14.343l6.203-6.272c.165-.165.33-.246.495-.246h3.239c.144 0 .236.06.285.18.046.149.034.255-.036.315l-6.555 6.344 6.836 8.507c.095.104.117.208.07.335" />
+          </svg>
+          Dataset on Kaggle
+        </a>
+       
+      </div>
+
+    </main>
+  </div><!-- end layout -->
+
+  <script>
+    /* ─── LOADING SCREEN ─── */
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('page-loader');
+      setTimeout(() => {
+        loader.style.opacity = '0';
+        document.body.classList.remove('overflow-hidden');
+        setTimeout(() => loader.remove(), 700);
+      }, 150);
+    });
+
+    /* ─── THEME TOGGLE ─── */
+    const html = document.documentElement;
+    const themeToggles = document.querySelectorAll('.toggle-pill');
+    function setDark(dark) {
+      dark ? html.classList.add('dark') : html.classList.remove('dark');
+      themeToggles.forEach(t => t.setAttribute('aria-checked', dark ? 'true' : 'false'));
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+    }
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) setDark(true);
+    themeToggles.forEach(t => t.addEventListener('click', () => setDark(!html.classList.contains('dark'))));
+
+    /* ─── STARS ─── */
+    const starCanvas = document.getElementById('starCanvas');
+    for (let i = 0; i < 30; i++) {
+      const star = document.createElement('div');
+      star.className = `star ${Math.random() > 0.8 ? 'blue' : 'white'}`;
+      Object.assign(star.style, {
+        left: `${Math.random() * 100}vw`, top: `${Math.random() * 100}vh`,
+        width: `${Math.random() * 2 + 1}px`, height: `${Math.random() * 2 + 1}px`,
+        animationDuration: `${Math.random() * 3 + 2}s`, animationDelay: `${Math.random() * 5}s`
+      });
+      starCanvas.appendChild(star);
+    }
+
+    /* ─── AUTO TOC + SCROLLSPY ─── */
+    document.addEventListener('DOMContentLoaded', () => {
+      const contentArea = document.getElementById('content-area');
+      const tocNav = document.getElementById('toc-nav');
+      const headings = contentArea.querySelectorAll('h2, h3');
+      const tocLinks = [];
+
+      if (headings.length === 0) { document.querySelector('aside').style.display = 'none'; return; }
+
+      headings.forEach(h => {
+        if (!h.id) h.id = h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const a = document.createElement('a');
+        a.href = `#${h.id}`;
+        a.textContent = h.textContent;
+        a.className = `toc-link ${h.tagName === 'H3' ? 'is-h3' : ''}`;
+        tocNav.appendChild(a);
+        tocLinks.push({ element: h, link: a });
+      });
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            tocLinks.forEach(i => i.link.classList.remove('active'));
+            const active = tocLinks.find(i => i.element.id === e.target.id);
+            if (active) active.link.classList.add('active');
+          }
+        });
+      }, { root: null, rootMargin: '-120px 0px -60% 0px', threshold: 0 });
+
+      headings.forEach(h => observer.observe(h));
+    });
+  </script>
+</body>
+
+</html>
