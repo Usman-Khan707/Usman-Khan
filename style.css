@@ -9,6 +9,18 @@
     --tag-bg: #78A083;
     --tag-text: white;
 }
+/* ─── VIEW COUNTER ─── */
+.view-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
 
 html.dark {
     --accent: #60A5FA;
